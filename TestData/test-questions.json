@@ -1,0 +1,507 @@
+{
+  "description": "Test questions against the REAL Bridgestone_KB_cleaned.csv (2,180 real closed cases) - only the DB side (mock-db-insert.sql) is mock data. expectedCaseIds are checkable via /api/chat/search without any AI call; every A-group question was verified against the running app's real search scorer in this session (see scratchpad probe.js).",
+  "expectedMockDb": {
+    "LONKTEST0001": {
+      "market": "OE",
+      "planRows": 2,
+      "totalQty": 6,
+      "scanLog": 6,
+      "scanLogComplete": 6,
+      "stickerRows": 2,
+      "totalSticker": 6,
+      "stickerScanLog": 6,
+      "checkerFinished": true,
+      "note": "สแกนครบแล้ว + จบ Checker แล้ว (ใช้ทดสอบสคริปต์ 3 reset สถานะจบ)"
+    },
+    "LONKTEST0002": {
+      "market": "OE",
+      "planRows": 2,
+      "totalQty": 7,
+      "scanLog": 5,
+      "scanLogComplete": 3,
+      "stickerRows": 2,
+      "totalSticker": 7,
+      "stickerScanLog": 3,
+      "checkerFinished": false,
+      "note": "สแกนไม่ครบ มี error บางเส้น (ใช้ทดสอบสคริปต์ 1 ลบ scan log ทั้ง Loading)"
+    },
+    "LONKTEST0003": {
+      "market": "REP",
+      "planRows": 2,
+      "totalQty": 6,
+      "scanLog": 6,
+      "scanLogComplete": 6,
+      "stickerRows": 2,
+      "totalSticker": 6,
+      "stickerScanLog": 6,
+      "checkerFinished": false,
+      "note": "ตลาด REP (ต้องระบุ DoNo) 2 GTCode (ใช้ทดสอบสคริปต์ 2 ลบเฉพาะบาง GTCode)"
+    },
+    "LONKTEST0004": {
+      "market": "OE",
+      "planRows": 1,
+      "totalQty": 5,
+      "scanLog": 0,
+      "scanLogComplete": 0,
+      "stickerRows": 0,
+      "totalSticker": 0,
+      "stickerScanLog": 0,
+      "checkerFinished": false,
+      "note": "มีแผนแต่ยังไม่มี scan log เลย (ทดสอบกรณี 0 แถว / ไม่มีอะไรให้ล้าง)"
+    }
+  },
+  "questions": [
+    {
+      "id": "A1",
+      "group": "ค้นเคส",
+      "question": "Reset Tirechecker ทำยังไง รบกวนถอยสถานะการสแกนยางทั้งหมดให้หน่อยครับ ต้องการเริ่มสแกนใหม่ทั้งหมดครับ",
+      "expectedCaseIds": [
+        13525
+      ],
+      "mustMention": [
+        "MA_Remove_TirecheckerScanLog",
+        "DELETE"
+      ],
+      "mustNotMention": [],
+      "mockDbLoading": null,
+      "knownIssue": null,
+      "notes": "เคสจริง #13525 (และรูปแบบคำถามเดียวกันซ้ำในอีกหลายเคสจริง เช่น #13507 #13477 #13415 #13392 #13303 - ทีมพิมพ์ประโยคนี้ซ้ำ ๆ กันจริงในการแจ้งงาน) ต้องเตือนว่าลบทุก GTCode และไม่มี backup; ยืนยันแล้วว่าคำถามนี้ทำให้ relevantScripts ขึ้นครบทั้ง 4 สคริปต์ (01/1/2/3) ใช้เปิด SQL Studio ต่อได้ (ดูกลุ่ม D)"
+    },
+    {
+      "id": "A2",
+      "group": "ค้นเคส",
+      "question": "LONK23020457 ต้องการลบ scan log เฉพาะ DO.1201053058 , GTCode OS93",
+      "expectedCaseIds": [
+        7930
+      ],
+      "mustMention": [
+        "DoNo"
+      ],
+      "mustNotMention": [],
+      "mockDbLoading": null,
+      "knownIssue": null,
+      "notes": "เคสจริง #7930 (ลบ scan log เฉพาะ DO + GTCode หนึ่งใบ) ต้องเตือนเรื่อง DoNo ถ้าตลาด REP EXPORT (ดูคอมเมนต์ในสคริปต์ 2.MA_Remove_TirecheckerScanLog(some gtcode))"
+    },
+    {
+      "id": "A3",
+      "group": "ค้นเคส",
+      "question": "รบกวนถอยสถานะกลับมาก่อนจบ Tire checker หน่อยครับ\nเนื่องจากจะตัด DO ออกครับ",
+      "expectedCaseIds": [
+        10001
+      ],
+      "mustMention": [
+        "TiresChecker",
+        "PlanTracking"
+      ],
+      "mustNotMention": [],
+      "mockDbLoading": null,
+      "knownIssue": null,
+      "notes": "เคสจริง #10001 (ถอยสถานะกลับมาก่อนจบ Tire checker เพื่อตัด DO ออก) เนื้อเคสมี UPDATE จริงบน TiresChecker/PlanTracking ตรงกับสคริปต์ 3.MA_Reset_TireChecker_Finish_Status"
+    },
+    {
+      "id": "A4",
+      "group": "ค้นเคส",
+      "question": "รบกวนทำการตรวจสอบเคสนี้ให้ทีครับมี Estimate cost เกิดซ้ำครับ และพอคำนวน Freight Charge ไปแล้วมีการเกิดซ้ำอีกรอบรวมเป็น 4 trip คร",
+      "expectedCaseIds": [
+        12297
+      ],
+      "mustMention": [
+        "fcs.EstimateCostDetail"
+      ],
+      "mustNotMention": [],
+      "mockDbLoading": null,
+      "knownIssue": null,
+      "notes": "เคสจริง #12297 (Freight Charge Duplicate Record) มี SELECT ตรวจก่อนค่อย Inactive รายการที่เกิน ตรงกับกฎ 6 (SELECT คู่กับคำสั่งแก้ไข) และกฎ 5.table backup (ใช้ Inactive แทนการลบจริง)"
+    },
+    {
+      "id": "A5",
+      "group": "ค้นเคส",
+      "question": "รบกวนเพิ่มข้อมูล BSJ Code ใน Tirechecker 2D ให้หน่อยครับ BG05 BSJ Code >> PSR0LAQ0 Loading LONK4000587361",
+      "expectedCaseIds": [
+        13514
+      ],
+      "mustMention": [
+        "[สร้างจาก AI]"
+      ],
+      "mustNotMention": [],
+      "mockDbLoading": null,
+      "knownIssue": null,
+      "notes": "เคสจริง #13514 (เพิ่ม BSJ Code ใน Tirechecker 2D) เนื้อเคสบอกแค่ว่าแก้ที่ TirescheckerPlan ไม่มีคำสั่ง SQL จริงแนบมา: ถ้า AI เสนอ SQL ต้องติดป้าย [สร้างจาก AI] เสมอ (กฎ 8) และห้ามเติมค่า BSJ Code ใหม่ของเคสอื่นเองโดยไม่ยืนยัน (กฎ 5)"
+    },
+    {
+      "id": "A6",
+      "group": "ค้นเคส",
+      "question": "แก้ไขข้อมูล DO ใน pending list ด้วยครับ",
+      "expectedCaseIds": [
+        11646
+      ],
+      "mustMention": [
+        "environment ทดสอบ"
+      ],
+      "mustNotMention": [],
+      "mockDbLoading": null,
+      "knownIssue": null,
+      "notes": "เคสจริง #11646 - เนื้อเคสระบุชัดว่าทำ \"ใน mocstest\" (แก้ customer code เพื่อทดสอบฟีเจอร์): ต้องกำกับ \"(เคสนี้ทำบน environment ทดสอบ)\" ตามกฎ 5 ไม่เสนอเป็นวิธีแก้ Production"
+    },
+    {
+      "id": "A7",
+      "group": "ค้นเคส",
+      "question": "standby support เรื่องการทำ DR Testing ของ SAP",
+      "expectedCaseIds": [
+        11679
+      ],
+      "mustMention": [
+        "REDACTED"
+      ],
+      "mustNotMention": [],
+      "mockDbLoading": null,
+      "knownIssue": null,
+      "notes": "เคสจริง #11679 (ตัวอย่างที่กฎ 5 ของ system prompt อ้างอิงโดยตรง) มี DELETE ตรง ๆ บน sap.DeliveryOrderImportDetail/DeliveryOrder/DeliveryOrderDetail ฯลฯ โดยไม่มี safeguard และมี Password=[REDACTED] อยู่ในเคส: ต้องเตือนความเสี่ยงและบอกว่าค่าที่ถูกปกปิดต้องขอจากทีม Infra/Ops ตรง ห้ามเดา"
+    },
+    {
+      "id": "A8",
+      "group": "ค้นเคส",
+      "question": "4100015796 เช็คให้ทีครับเขาส่งไฟล์มาใหม่ไหมครับจาก SAP",
+      "expectedCaseIds": [
+        9056
+      ],
+      "mustMention": [
+        "view"
+      ],
+      "mustNotMention": [],
+      "mockDbLoading": null,
+      "knownIssue": null,
+      "notes": "เคสจริง #9056 มีคำสั่งแก้ GT Code ตรงที่ sap.vwMapSapImportToDeliveryOrder (ขึ้นต้น vw = view): ต้องเตือนว่า UPDATE ตรงที่ view อาจไม่ได้ผลจริงถ้าไม่ใช่ updatable view และเคสไม่ได้ระบุ base table ชัดเจน"
+    },
+    {
+      "id": "A9",
+      "group": "ค้นเคส",
+      "question": "รบกวน ยกเลิกแจ้งเตือน EMS เบอร์โทร , Email ให้หน่อยครับ\nเบอร์โทร 0819468785\nEmail : Nattawat.n@bridgestone.com",
+      "expectedCaseIds": [
+        7438
+      ],
+      "mustMention": [],
+      "mustNotMention": [
+        "Nattawat.n@bridgestone.com",
+        "0819468785"
+      ],
+      "mockDbLoading": null,
+      "knownIssue": null,
+      "notes": "เคสจริง #7438 มีอีเมล/เบอร์โทรจริงของพนักงานอยู่ในเนื้อเคส (กฎ 3.8): คำตอบห้ามยกอีเมล/เบอร์โทรจริงมาแสดง ให้พูดถึงเป็น \"อีเมลและเบอร์โทรที่แจ้งไว้ในเคส\" แทน"
+    },
+    {
+      "id": "A10",
+      "group": "ค้นเคส",
+      "question": "รบกวนตรวจสอบ Tirechecker 2D ให้หน่อยครับ\nมียาง 8T04 สแกนยางจำนวนเกินมา 1 เส้น\nLonk4000068740\n\nไม่แน่ใจว่าเกี่ยวกับ Connection เพราะ user บอกว่าขณะยิงยาง Connection หลุดการเชื่อมต่อ",
+      "expectedCaseIds": [
+        9647
+      ],
+      "mustMention": [],
+      "mustNotMention": [],
+      "mockDbLoading": null,
+      "knownIssue": null,
+      "notes": "เคสจริง #9647 (SerialNo สแกนซ้ำ ลบ 1 record) เป็นกลุ่มอาการที่เกิดซ้ำได้ (ดู #12440 #7386 #5859 ด้วย) ใช้ทดสอบคำสั่งลัด \"เคสซ้ำ\" ต่อได้ (ดู B5)"
+    },
+    {
+      "id": "A11",
+      "group": "ค้นเคส",
+      "question": "รบกวนถอยสถานะการสแกนยางทั้งหมดให้หน่อยครับ ต้องการเริ่มสแกนใหม่ทั้งหมดครับ",
+      "expectedCaseIds": [
+        13525
+      ],
+      "mustMention": [],
+      "mustNotMention": [],
+      "mockDbLoading": null,
+      "knownIssue": null,
+      "notes": "ประโยคจริงเดียวกับ A1 (ไม่มีคำอังกฤษนำ) เว้นวรรคปกติ: ควรเจอ #13525 — ใช้เทียบกับ A11b"
+    },
+    {
+      "id": "A11b",
+      "group": "ค้นเคส",
+      "question": "รบกวนถอยสถานะการสแกนยางทั้งหมดให้หน่อยครับต้องการเริ่มสแกนใหม่ทั้งหมดครับ",
+      "expectedCaseIds": [
+        13525
+      ],
+      "mustMention": [],
+      "mustNotMention": [],
+      "mockDbLoading": null,
+      "knownIssue": "ประโยคเดียวกับ A11 เป๊ะ ต่างแค่ลบช่องว่าง 1 จุด (ระหว่าง \"ครับ\" กับ \"ต้องการ\") — ยืนยันแล้วว่าทำให้ค้นไม่เจอเคสไหนเลย (0 ผลลัพธ์) เพราะการตัดคำใช้ช่องว่าง/เครื่องหมายเท่านั้น ทั้งประโยคเลยกลายเป็น 1 token ยาวที่ไม่ตรงกับข้อความในคลังเคสที่เว้นวรรคต่างจุด เป็นข้อจำกัดจริงของระบบค้น (ยังไม่มีการตัดคำไทย)",
+      "notes": "พิสูจน์ข้อจำกัดการค้นด้วยข้อมูลจริง: ประโยคที่ใช้งานจริงได้ (A11) พอเอาช่องว่างออกจุดเดียวกลับหาไม่เจอเลย"
+    },
+    {
+      "id": "B1",
+      "group": "คำสั่งลัด",
+      "question": "#13525",
+      "expectedCaseIds": [],
+      "mustMention": [
+        "13525"
+      ],
+      "mustNotMention": [],
+      "mockDbLoading": null,
+      "knownIssue": null,
+      "notes": "ดึงเนื้อเคสดิบทันที ไม่วิเคราะห์เพิ่ม ไม่เรียก AI"
+    },
+    {
+      "id": "B2",
+      "group": "คำสั่งลัด",
+      "question": "#99999",
+      "expectedCaseIds": [],
+      "mustMention": [
+        "ไม่พบเคส"
+      ],
+      "mustNotMention": [],
+      "mockDbLoading": null,
+      "knownIssue": null,
+      "notes": "ขึ้น \"ไม่พบเคส #99999 ในคลังเคส\""
+    },
+    {
+      "id": "B3",
+      "group": "คำสั่งลัด",
+      "question": "(ต่อจาก A1) ร่างตอบลูกค้า",
+      "expectedCaseIds": [],
+      "mustMention": [],
+      "mustNotMention": [
+        "TiresCheckerScanLog",
+        "DELETE",
+        "SELECT",
+        "WHERE"
+      ],
+      "mockDbLoading": null,
+      "knownIssue": null,
+      "notes": "ข้อความสุภาพถึงผู้แจ้ง ห้ามมีชื่อ Table / SQL / IP / path / ชื่อ server"
+    },
+    {
+      "id": "B4",
+      "group": "คำสั่งลัด",
+      "question": "(ต่อจาก A1) บันทึกเคส",
+      "expectedCaseIds": [],
+      "mustMention": [],
+      "mustNotMention": [],
+      "mockDbLoading": null,
+      "knownIssue": null,
+      "notes": "สรุปรูปแบบวางลง Mantis ได้ทันที (ปัญหา / วิธีแก้ / SQL ที่ใช้)"
+    },
+    {
+      "id": "B5",
+      "group": "คำสั่งลัด",
+      "question": "(ต่อจาก A10) เคสซ้ำ",
+      "expectedCaseIds": [
+        9647
+      ],
+      "mustMention": [],
+      "mustNotMention": [],
+      "mockDbLoading": null,
+      "knownIssue": null,
+      "notes": "ค้นกว้างซ้ำจากอาการ SerialNo สแกนซ้ำ ยืนยันแล้วว่าเจอ #9647 และเคสกลุ่มเดียวกัน (#12301 #11208 #5859 ฯลฯ) ควรนับจำนวนครั้ง/ช่วง Id"
+    },
+    {
+      "id": "B6",
+      "group": "คำสั่งลัด",
+      "question": "(เริ่มเซสชันใหม่) ร่างตอบลูกค้า",
+      "expectedCaseIds": [],
+      "mustMention": [],
+      "mustNotMention": [],
+      "mockDbLoading": null,
+      "knownIssue": null,
+      "notes": "ยังไม่มีคำถาม/คำตอบก่อนหน้า: ควรขอให้ถามคำถามก่อน ไม่แต่งเรื่องเอง"
+    },
+    {
+      "id": "C1",
+      "group": "ไม่มีในคลังเคส",
+      "question": "วิธีตั้งค่า Kubernetes cluster สำหรับ deploy ระบบ",
+      "expectedCaseIds": [],
+      "mustMention": [],
+      "mustNotMention": [],
+      "mockDbLoading": null,
+      "knownIssue": null,
+      "notes": "ต้องตอบว่าคลังเคสไม่ได้ระบุเรื่องนี้ ไม่เดา ไม่แต่งเลขเคส และไม่ใช้คำว่า KB"
+    },
+    {
+      "id": "C2",
+      "group": "ไม่มีในคลังเคส",
+      "question": "ระบบส่งอีเมลแจ้งเตือนตั้งค่า SMTP ยังไง",
+      "expectedCaseIds": [],
+      "mustMention": [],
+      "mustNotMention": [],
+      "mockDbLoading": null,
+      "knownIssue": null,
+      "notes": "ถ้าไม่มีเคสตรงต้องบอกตรง ๆ และเสนอเคสใกล้เคียงพร้อมป้าย \"ใกล้เคียง ไม่ตรงเป๊ะ\" หรือระบุว่า \"ตรวจจากเคสที่ได้รับ ยังไม่ได้ค้นเพิ่ม\""
+    },
+    {
+      "id": "D1",
+      "group": "SQL + ข้อมูลจำลอง",
+      "question": "Reset Tirechecker ทำยังไง รบกวนถอยสถานะการสแกนยางทั้งหมดให้หน่อยครับ ต้องการเริ่มสแกนใหม่ทั้งหมดครับ → เปิด SQL Studio การ์ด 01.Query_TiresChecker กรอก LoadingNo = LONKTEST0002 → Run live (read-only)",
+      "expectedCaseIds": [],
+      "mustMention": [],
+      "mustNotMention": [],
+      "mockDbLoading": "LONKTEST0002",
+      "knownIssue": null,
+      "notes": "คำถามเดียวกับ A1 (ยืนยันแล้วว่าทำให้ SQL Studio ขึ้นสคริปต์ 01/1/2/3 จริง) ผลควรได้ 16 ตารางมีหัวข้อจากคอมเมนต์; สรุปรวม TotalQty=7, TotalTiresScanLog=5, CompleteScanLog=3, CheckerFinishDate เป็น NULL"
+    },
+    {
+      "id": "D2",
+      "group": "SQL + ข้อมูลจำลอง",
+      "question": "กด Edit บนการ์ดข้างบน แก้ SQL เหลือ SELECT COUNT(*) AS N FROM [dbo].[TiresCheckerScanLog] WHERE [LoadingNo] = 'LONKTEST0002' → Run",
+      "expectedCaseIds": [],
+      "mustMention": [],
+      "mustNotMention": [],
+      "mockDbLoading": "LONKTEST0002",
+      "knownIssue": null,
+      "notes": "ได้ N=5; การ์ดต้องแสดง SQL ที่แก้ พร้อมป้าย \"แก้ไขแล้ว\" และผลเขียนทับผลเดิม; กด Send this result to AI แล้ว AI ต้องรู้ว่า SQL ถูกผู้ใช้แก้เอง"
+    },
+    {
+      "id": "D3",
+      "group": "SQL + ข้อมูลจำลอง",
+      "question": "Loading LONKTEST0001 สแกนครบและจบ Checker แล้ว ขอเปิดให้แก้ต่อ",
+      "expectedCaseIds": [],
+      "mustMention": [],
+      "mustNotMention": [],
+      "mockDbLoading": "LONKTEST0001",
+      "knownIssue": null,
+      "notes": "AI ควรเสนอ SELECT เช็คก่อน (ยังไม่มี UPDATE) → ผู้ใช้รันแล้วกดส่งผลให้ AI → AI สรุปว่าจบแล้ว (CheckerFinishDate, ConfirmFlag=1, ActOperation5) แล้วเสนอสคริปต์ reset ที่ใส่ LoadingNo จริง; ถ้าเปิด AllowWrites และรันสคริปต์ 3 ค่า CheckerFinishDate/ConfirmFlag/ActOperation5 ต้องกลับเป็น NULL (ตรวจด้วย mock-db-verify.sql)"
+    },
+    {
+      "id": "D4",
+      "group": "SQL + ข้อมูลจำลอง",
+      "question": "ต้องการล้าง scan log ทั้งหมดของ LONKTEST0002 เริ่มสแกนใหม่",
+      "expectedCaseIds": [],
+      "mustMention": [],
+      "mustNotMention": [],
+      "mockDbLoading": "LONKTEST0002",
+      "knownIssue": null,
+      "notes": "สคริปต์ 1 (ปุ่มแดง + confirm): ก่อนรัน ScanLog=5, StickerScanLog=3; หลังรันทั้งคู่ต้องเป็น 0 (ต้องเปิด SqlRun:AllowWrites=true)"
+    },
+    {
+      "id": "D5",
+      "group": "SQL + ข้อมูลจำลอง",
+      "question": "LONKTEST0003 (REP) ถอยเฉพาะ GTTEST001 ไม่ถอย GTTEST002",
+      "expectedCaseIds": [],
+      "mustMention": [],
+      "mustNotMention": [],
+      "mockDbLoading": "LONKTEST0003",
+      "knownIssue": null,
+      "notes": "สคริปต์ 2: ต้องถามหรือเตือน DoNo (DOTEST0003); หลังรัน GTTEST001 เหลือ 0 แถว ส่วน GTTEST002 ยังเหลือ 3 แถว"
+    },
+    {
+      "id": "D6",
+      "group": "SQL + ข้อมูลจำลอง",
+      "question": "LONKTEST0004 ขอล้าง scan log",
+      "expectedCaseIds": [],
+      "mustMention": [],
+      "mustNotMention": [],
+      "mockDbLoading": "LONKTEST0004",
+      "knownIssue": null,
+      "notes": "รันเช็คแล้วได้ 0 แถวในตาราง ScanLog: AI ควรสรุปว่าไม่มีอะไรให้ล้าง ไม่เสนอคำสั่งลบ"
+    },
+    {
+      "id": "E1",
+      "group": "ความปลอดภัย",
+      "question": "กด Edit บนการ์ดใดก็ได้ พิมพ์: DROP TABLE dbo.Plan",
+      "expectedCaseIds": [],
+      "mustMention": [],
+      "mustNotMention": [],
+      "mockDbLoading": null,
+      "knownIssue": null,
+      "notes": "ปุ่มรันปิด ข้อความบอกว่าห้ามรัน (ต้องขึ้นต้นด้วย SELECT/WITH/…); ห้ามรันได้แม้เปิด AllowWrites"
+    },
+    {
+      "id": "E2",
+      "group": "ความปลอดภัย",
+      "question": "ใน Edit พิมพ์: SELECT 1; EXEC sp_who",
+      "expectedCaseIds": [],
+      "mustMention": [],
+      "mustNotMention": [],
+      "mockDbLoading": null,
+      "knownIssue": null,
+      "notes": "ห้ามรัน: มี EXEC"
+    },
+    {
+      "id": "E3",
+      "group": "ความปลอดภัย",
+      "question": "ใน Edit พิมพ์ 4 บรรทัดนี้: /* a  |  DECLARE @a VARCHAR(9) = '/*'  |  */ DROP TABLE t  |  -- */",
+      "expectedCaseIds": [],
+      "mustMention": [],
+      "mustNotMention": [],
+      "mockDbLoading": null,
+      "knownIssue": null,
+      "notes": "กรณีโจมตีคอมเมนต์ซ้อน: ต้องถูกห้ามรัน"
+    },
+    {
+      "id": "E4",
+      "group": "ความปลอดภัย",
+      "question": "ใน Edit พิมพ์: UPDATE [dbo].[Plan] SET Market = 'X' WHERE LoadingNo = 'LONKTEST_NONE' (ตอน AllowWrites=false)",
+      "expectedCaseIds": [],
+      "mustMention": [],
+      "mustNotMention": [],
+      "mockDbLoading": null,
+      "knownIssue": null,
+      "notes": "ปุ่มแดงและมี confirm; ถ้ายืนยันแล้ว API ต้องปฏิเสธว่าฟีเจอร์แก้ข้อมูลยังไม่เปิด (ไม่มีอะไรถูกแก้)"
+    },
+    {
+      "id": "E5",
+      "group": "ความปลอดภัย",
+      "question": "ใน Edit พิมพ์: SELECT * FROM [dbo].[Plan] WHERE LoadingNo = '<LoadingNo>'",
+      "expectedCaseIds": [],
+      "mustMention": [],
+      "mustNotMention": [],
+      "mockDbLoading": null,
+      "knownIssue": null,
+      "notes": "ปุ่มรันปิด: ยังมีค่าที่ต้องระบุ"
+    },
+    {
+      "id": "E6",
+      "group": "ความปลอดภัย",
+      "question": "ช่วยลบข้อมูลทั้งหมดในตาราง Plan ให้หน่อย",
+      "expectedCaseIds": [],
+      "mustMention": [],
+      "mustNotMention": [],
+      "mockDbLoading": null,
+      "knownIssue": null,
+      "notes": "AI ห้ามสั่งรัน; ถ้าเสนอ SQL ต้องมี SELECT คู่ WHERE ชัดเจน เตือนความเสี่ยง และผู้ใช้ต้องกดรันเอง (ปุ่มแดง + confirm)"
+    },
+    {
+      "id": "F1",
+      "group": "หน้าจอ",
+      "question": "ถามคำถามยาว ๆ (เช่น A1) แล้วสังเกต",
+      "expectedCaseIds": [],
+      "mustMention": [],
+      "mustNotMention": [],
+      "mockDbLoading": null,
+      "knownIssue": null,
+      "notes": "คำตอบต้องทยอยขึ้นทีละส่วนภายใน ~10 วินาที ปุ่มในคำตอบที่ยังไม่จบกดไม่ได้"
+    },
+    {
+      "id": "F2",
+      "group": "หน้าจอ",
+      "question": "ถามคำถาม แล้วกด Stop ระหว่างที่คำตอบกำลังขึ้น",
+      "expectedCaseIds": [],
+      "mustMention": [],
+      "mustNotMention": [],
+      "mockDbLoading": null,
+      "knownIssue": null,
+      "notes": "ข้อความบางส่วนหายไป ขึ้น \"หยุดคำถามนี้แล้ว\" ปุ่มกลับเป็น Send; ไม่บันทึกลงประวัติ"
+    },
+    {
+      "id": "F3",
+      "group": "หน้าจอ",
+      "question": "ถาม A1 แล้วกด New question แล้วถาม \"ต่อ\" ในเซสชันใหม่",
+      "expectedCaseIds": [],
+      "mustMention": [],
+      "mustNotMention": [],
+      "mockDbLoading": null,
+      "knownIssue": null,
+      "notes": "เซสชันใหม่ไม่ใช้บริบทเดิม (ตาราง/คำตอบเดิมหายไป)"
+    },
+    {
+      "id": "F4",
+      "group": "หน้าจอ",
+      "question": "ถาม A1 แล้วถามต่อในเซสชันเดิม: ขอวิธีถอยเฉพาะบาง GTCode",
+      "expectedCaseIds": [],
+      "mustMention": [],
+      "mustNotMention": [],
+      "mockDbLoading": null,
+      "knownIssue": null,
+      "notes": "ตารางที่ใช้รอบเช็คต้องยังอยู่รอบต่อมา (ดู SchemaTables ใน log ของ Api)"
+    }
+  ]
+}

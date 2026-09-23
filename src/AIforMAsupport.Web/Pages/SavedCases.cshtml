@@ -1,0 +1,377 @@
+@page
+@model AIforMAsupport.Web.Pages.SavedCasesModel
+@{
+    ViewData["Title"] = "เคสที่บันทึกแล้ว";
+}
+
+<div class="history-page">
+    <header class="topbar page-topbar">
+        <a class="topbar-brand" href="/">
+            <span class="mark">
+                <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"></circle></svg>
+            </span>
+            <span class="name">AI Assistant for MA Support</span>
+        </a>
+        <span class="page-topbar-divider"></span>
+        <h1 class="page-topbar-title">เคสที่บันทึกแล้ว</h1>
+        <div class="page-topbar-actions">
+            <a class="history-btn" href="/History">
+                <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="M4 4v6h6"></path><path d="M20 20v-6h-6"></path><path d="M5.5 9a7 7 0 0 1 12-3.5L20 8"></path><path d="M18.5 15a7 7 0 0 1-12 3.5L4 16"></path></svg>
+                History
+            </a>
+            <a class="history-btn" href="/">
+                <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="M19 12H5"></path><path d="M11 18l-6-6 6-6"></path></svg>
+                Back to chat
+            </a>
+        </div>
+    </header>
+
+    <div class="page-body">
+        <p class="page-body-intro">รายการที่กด "บันทึกเคส" ยืนยันไว้แล้ว (โหมดดูอย่างเดียว) — เรียงใหม่สุดก่อน คลิกแถวเพื่อดูรายละเอียดและเพิ่มเข้าคลังเคสทีละอัน หรือติ๊กเลือกหลายเคสแล้วกด "เพิ่มเข้าคลัง" เพื่อเพิ่มพร้อมกัน (ปุ่ม Copy รายแถวสำหรับคัดลอกไปวาง Mantis ยังใช้ได้ตามปกติ)</p>
+
+        @if (Model.ErrorMessage is not null)
+        {
+            <div class="history-error">@Model.ErrorMessage</div>
+        }
+
+        @if (Model.SavedCases.Count == 0 && Model.ErrorMessage is null)
+        {
+            <div class="history-empty">ยังไม่มีเคสที่บันทึกไว้ — พิมพ์ "บันทึกเคส" ในแชทแล้วกดยืนยันบันทึกก่อน</div>
+        }
+        else if (Model.SavedCases.Count > 0)
+        {
+            <div class="saved-case-search-row">
+                <input type="search" class="saved-case-search" id="savedCaseSearch" placeholder="ค้นหาเคส — เลขเคส, ชื่อสคริปต์, เนื้อหา..." />
+            </div>
+
+            <div class="saved-cases-toolbar">
+                <label class="saved-case-select-all">
+                    <input type="checkbox" id="savedCaseSelectAll" />
+                    เลือกทั้งหมด
+                </label>
+                <button type="button" class="history-btn" id="savedCaseAddSelectedToKb" disabled>เพิ่มเข้าคลัง</button>
+            </div>
+
+            <div class="history-empty" id="savedCaseNoResults" hidden>ไม่พบเคสที่ตรงกับคำค้นหา</div>
+
+            <div class="saved-cases-list" id="savedCasesList">
+                @foreach (var c in Model.SavedCases)
+                {
+                    var searchText = string.Join(
+                        ' ',
+                        c.SavedAtUtc.ToLocalTime().ToString("d MMM yyyy"),
+                        string.Join(' ', c.ReferencedCaseIds),
+                        string.Join(' ', c.KnownScripts),
+                        c.Summary).ToLowerInvariant();
+
+                    var kbId = Model.FindKbAdditionId(c.Id);
+                    <div class="saved-case-item" data-search="@searchText">
+                        <div class="saved-case-row" data-toggle-detail tabindex="0" role="button" aria-expanded="false">
+                            <label class="saved-case-checkbox" onclick="event.stopPropagation()">
+                                <input type="checkbox" class="saved-case-check" data-raw="@c.Summary" data-saved-case-id="@c.Id" data-kb-added="@(kbId is not null ? "true" : "false")" />
+                            </label>
+                            <div class="saved-case-row-main">
+                                <div class="saved-case-preview">@SavedCasesModel.RenderPreview(c.Summary)</div>
+                                <div class="saved-case-item-meta">
+                                    @if (kbId is not null)
+                                    {
+                                        <span class="kb-added-chip">✓ ในคลัง #@kbId</span>
+                                    }
+                                    <span>@c.SavedAtUtc.ToLocalTime().ToString("d MMM yyyy HH:mm")</span>
+                                    @if (c.ReferencedCaseIds.Count > 0)
+                                    {
+                                        <span class="case-tags">
+                                            @foreach (var id in c.ReferencedCaseIds)
+                                            {
+                                                <span class="case-tag-static">#@id</span>
+                                            }
+                                        </span>
+                                    }
+                                    @if (c.KnownScripts.Count > 0)
+                                    {
+                                        <span class="case-tags">
+                                            @foreach (var s in c.KnownScripts)
+                                            {
+                                                <span class="case-tag-static">@s</span>
+                                            }
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                            <button type="button" class="sql-edit-secondary saved-case-copy-one" data-raw="@c.Summary" onclick="event.stopPropagation()">Copy</button>
+                            <svg class="saved-case-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"></path></svg>
+                        </div>
+                        <div class="saved-case-detail history-turn-answer message-text">
+                            @Html.Raw(SavedCasesModel.RenderSummary(c.Summary))
+                            <div class="saved-case-kb-row" onclick="event.stopPropagation()">
+                                @if (kbId is null)
+                                {
+                                    <button type="button" class="history-btn saved-case-add-kb" data-saved-case-id="@c.Id" data-raw="@c.Summary">เพิ่มเข้าคลังเคส</button>
+                                }
+                                else
+                                {
+                                    <span class="kb-added-badge">เพิ่มแล้ว ✓ #@kbId</span>
+                                    <button type="button" class="history-btn saved-case-remove-kb" data-kb-id="@kbId">ลบออกจากคลัง</button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<dialog class="sql-editor save-case-editor" id="addKbEditor" aria-labelledby="addKbEditorTitle">
+    <div class="sql-editor-head">
+        <h3 id="addKbEditorTitle">เพิ่มเข้าคลังเคส</h3>
+        <button type="button" class="drawer-close" id="addKbEditorClose" aria-label="Close">
+            <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+        </button>
+    </div>
+    <p class="sql-editor-origin">ตรวจ/แก้ไขก่อนเพิ่มเข้าคลังค้นหา — คำถามที่คล้ายกันในอนาคตจะค้นเจอเคสนี้ด้วย AI จะอ้างอิงพร้อมป้าย "[เคสที่ทีมสรุปเอง]" เสมอ ไม่ปนกับเคส Mantis จริง</p>
+    <div class="add-kb-fields">
+        <input type="text" id="addKbBsModule" placeholder="BS Module (ไม่บังคับ)" />
+        <input type="text" id="addKbSubCategory" placeholder="Sub Category (ไม่บังคับ)" />
+        <input type="text" id="addKbCaseType" placeholder="Case Type (ไม่บังคับ)" />
+    </div>
+    <textarea class="sql-editor-text save-case-editor-text" id="addKbContentText" spellcheck="true" aria-label="เนื้อหาที่จะเพิ่มเข้าคลัง"></textarea>
+    <div class="sql-editor-notice" id="addKbNotice" role="status"></div>
+    <div class="sql-editor-actions">
+        <button type="button" class="btn-primary" id="addKbSaveBtn">เพิ่มเข้าคลัง</button>
+        <button type="button" class="sql-edit-secondary" id="addKbCancelBtn">ยกเลิก</button>
+    </div>
+</dialog>
+
+@section Scripts {
+    <script>
+        (function () {
+            "use strict";
+            var selectAllEl = document.getElementById("savedCaseSelectAll");
+            var addSelectedBtn = document.getElementById("savedCaseAddSelectedToKb");
+            var searchEl = document.getElementById("savedCaseSearch");
+            var noResultsEl = document.getElementById("savedCaseNoResults");
+            var items = Array.prototype.slice.call(document.querySelectorAll(".saved-case-item"));
+            var checks = Array.prototype.slice.call(document.querySelectorAll(".saved-case-check"));
+
+            function updateAddSelectedButton() {
+                var checkedCount = checks.filter(function (c) { return c.checked; }).length;
+                if (!addSelectedBtn) return;
+                addSelectedBtn.disabled = checkedCount === 0;
+                addSelectedBtn.textContent = checkedCount > 0 ? "เพิ่มเข้าคลัง (" + checkedCount + ")" : "เพิ่มเข้าคลัง";
+            }
+
+            checks.forEach(function (c) {
+                c.addEventListener("change", function () {
+                    if (selectAllEl && !c.checked) selectAllEl.checked = false;
+                    updateAddSelectedButton();
+                });
+            });
+
+            if (selectAllEl) {
+                selectAllEl.addEventListener("change", function () {
+                    checks.forEach(function (c) { c.checked = selectAllEl.checked; });
+                    updateAddSelectedButton();
+                });
+            }
+
+            function copyText(text) {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    return navigator.clipboard.writeText(text);
+                }
+                var ta = document.createElement("textarea");
+                ta.value = text;
+                ta.style.position = "fixed";
+                ta.style.opacity = "0";
+                document.body.appendChild(ta);
+                ta.select();
+                try { document.execCommand("copy"); } catch (e) { /* ignore */ }
+                document.body.removeChild(ta);
+                return Promise.resolve();
+            }
+
+            Array.prototype.forEach.call(document.querySelectorAll(".saved-case-copy-one"), function (btn) {
+                btn.addEventListener("click", function () {
+                    copyText(btn.getAttribute("data-raw") || "");
+                });
+            });
+
+            // Bulk "เพิ่มเข้าคลัง": no per-item edit dialog (unlike the single-item add button) -
+            // each checked case's raw Summary goes straight in as both summary and kbContent, same
+            // defaults the single-item flow uses when its fields are left blank. Already-added
+            // cases (data-kb-added="true", shown with the chip in the collapsed row) are skipped
+            // client-side to avoid pointless round trips - the endpoint is idempotent anyway.
+            if (addSelectedBtn) {
+                addSelectedBtn.addEventListener("click", async function () {
+                    var targets = checks.filter(function (c) { return c.checked && c.getAttribute("data-kb-added") !== "true"; });
+                    if (targets.length === 0) return;
+
+                    addSelectedBtn.disabled = true;
+                    var failed = 0;
+
+                    for (var i = 0; i < targets.length; i++) {
+                        addSelectedBtn.textContent = "กำลังเพิ่ม (" + (i + 1) + "/" + targets.length + ")...";
+                        var raw = targets[i].getAttribute("data-raw") || "";
+                        try {
+                            var res = await fetch("/SavedCases?handler=AddToKb", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    sourceSavedCaseId: Number(targets[i].getAttribute("data-saved-case-id")),
+                                    bsModule: "",
+                                    subCategory: "",
+                                    caseType: "",
+                                    summary: raw,
+                                    kbContent: raw
+                                })
+                            });
+                            if (!res.ok) throw new Error("HTTP " + res.status);
+                        } catch (err) {
+                            failed++;
+                        }
+                    }
+
+                    if (failed > 0) alert("เพิ่มไม่สำเร็จ " + failed + " จาก " + targets.length + " เคส");
+
+                    // Same reasoning as the single-item add/remove flows - a full reload is the
+                    // simplest correct way to refresh every "เพิ่มแล้ว ✓" chip and badge at once.
+                    location.reload();
+                });
+            }
+
+            // Click (or Enter/Space) a row to expand/collapse its full rendered detail below it.
+            // Checkbox and Copy button clicks stop propagation above so they don't also toggle it.
+            Array.prototype.forEach.call(document.querySelectorAll("[data-toggle-detail]"), function (row) {
+                function toggle() {
+                    var item = row.closest(".saved-case-item");
+                    if (!item) return;
+                    var expanded = item.classList.toggle("expanded");
+                    row.setAttribute("aria-expanded", expanded ? "true" : "false");
+                }
+                row.addEventListener("click", toggle);
+                row.addEventListener("keydown", function (e) {
+                    if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        toggle();
+                    }
+                });
+            });
+
+            // Client-side filter - the saved-case list is small, so a plain substring match
+            // against each item's pre-lowercased "data-search" text (date + case ids + script
+            // names + full summary) is enough, no need for a backend search endpoint.
+            if (searchEl) {
+                searchEl.addEventListener("input", function () {
+                    var q = searchEl.value.trim().toLowerCase();
+                    var anyVisible = false;
+                    items.forEach(function (item) {
+                        var match = !q || (item.getAttribute("data-search") || "").indexOf(q) !== -1;
+                        item.hidden = !match;
+                        if (match) anyVisible = true;
+                    });
+                    if (noResultsEl) noResultsEl.hidden = anyVisible;
+                });
+            }
+
+            /* =========================== เพิ่มเข้าคลังเคส / ลบออกจากคลัง =========================== */
+
+            var addKbEditorEl = document.getElementById("addKbEditor");
+            var addKbBsModuleEl = document.getElementById("addKbBsModule");
+            var addKbSubCategoryEl = document.getElementById("addKbSubCategory");
+            var addKbCaseTypeEl = document.getElementById("addKbCaseType");
+            var addKbContentTextEl = document.getElementById("addKbContentText");
+            var addKbNoticeEl = document.getElementById("addKbNotice");
+            var addKbSaveBtn = document.getElementById("addKbSaveBtn");
+            var addKbState = { savedCaseId: null, saving: false };
+
+            function openAddKbEditor(savedCaseId, rawSummary) {
+                addKbState.savedCaseId = savedCaseId;
+                addKbBsModuleEl.value = "";
+                addKbSubCategoryEl.value = "";
+                addKbCaseTypeEl.value = "";
+                addKbContentTextEl.value = rawSummary || "";
+                addKbNoticeEl.textContent = "";
+                if (!addKbEditorEl.open) addKbEditorEl.showModal();
+                addKbContentTextEl.focus();
+                addKbContentTextEl.setSelectionRange(0, 0);
+                addKbContentTextEl.scrollTop = 0;
+            }
+
+            Array.prototype.forEach.call(document.querySelectorAll(".saved-case-add-kb"), function (btn) {
+                btn.addEventListener("click", function () {
+                    openAddKbEditor(btn.getAttribute("data-saved-case-id"), btn.getAttribute("data-raw"));
+                });
+            });
+
+            if (addKbSaveBtn) {
+                addKbSaveBtn.addEventListener("click", async function () {
+                    if (addKbState.saving) return;
+                    var content = addKbContentTextEl.value.trim();
+                    if (!content) {
+                        addKbNoticeEl.textContent = "ยังไม่มีเนื้อหา";
+                        return;
+                    }
+
+                    addKbState.saving = true;
+                    addKbSaveBtn.disabled = true;
+                    addKbNoticeEl.textContent = "กำลังเพิ่ม...";
+                    try {
+                        var res = await fetch("/SavedCases?handler=AddToKb", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                sourceSavedCaseId: addKbState.savedCaseId ? Number(addKbState.savedCaseId) : null,
+                                bsModule: addKbBsModuleEl.value.trim(),
+                                subCategory: addKbSubCategoryEl.value.trim(),
+                                caseType: addKbCaseTypeEl.value.trim(),
+                                summary: content,
+                                kbContent: content
+                            })
+                        });
+                        if (!res.ok) throw new Error("HTTP " + res.status);
+                        addKbEditorEl.close();
+                        // Simplest correct way to reflect the new "เพิ่มแล้ว ✓" state everywhere
+                        // (this row's button, any badge) without hand-syncing client state - this
+                        // is a low-frequency action, not the hot chat path.
+                        location.reload();
+                    } catch (err) {
+                        addKbNoticeEl.textContent = "เพิ่มไม่สำเร็จ: " + err.message;
+                    } finally {
+                        addKbState.saving = false;
+                        addKbSaveBtn.disabled = false;
+                    }
+                });
+            }
+
+            document.getElementById("addKbCancelBtn").addEventListener("click", function () { addKbEditorEl.close(); });
+            document.getElementById("addKbEditorClose").addEventListener("click", function () { addKbEditorEl.close(); });
+            addKbEditorEl.addEventListener("click", function (e) {
+                if (e.target !== addKbEditorEl) return;
+                var r = addKbEditorEl.getBoundingClientRect();
+                var inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+                if (!inside) addKbEditorEl.close();
+            });
+
+            Array.prototype.forEach.call(document.querySelectorAll(".saved-case-remove-kb"), function (btn) {
+                btn.addEventListener("click", async function () {
+                    var id = btn.getAttribute("data-kb-id");
+                    if (!confirm("ลบเคส #" + id + " ออกจากคลังค้นหา? (คำถามในอนาคตจะค้นไม่เจอเคสนี้อีก)")) return;
+
+                    btn.disabled = true;
+                    try {
+                        var res = await fetch("/SavedCases?handler=DeleteKbAddition", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ id: id })
+                        });
+                        if (!res.ok) throw new Error("HTTP " + res.status);
+                        location.reload();
+                    } catch (err) {
+                        btn.disabled = false;
+                        alert("ลบไม่สำเร็จ: " + err.message);
+                    }
+                });
+            });
+        })();
+    </script>
+}

@@ -1,0 +1,118 @@
+@page
+@model AIforMAsupport.Web.Pages.IndexModel
+@{
+    ViewData["Title"] = "Console";
+}
+
+<div class="app">
+    <header class="topbar">
+        <div class="topbar-brand">
+            <span class="mark">
+                <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"></circle></svg>
+            </span>
+            <span class="name">AI Assistant for MA Support</span>
+        </div>
+        <button type="button" class="history-btn new-chat-btn" id="newChatBtn" title="Start a new question — clears the conversation and context">
+            <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+            New question
+        </button>
+        <a class="history-btn" href="/SavedCases">
+            <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="M5 4h11l3 3v13H5V4Z"></path><path d="M8 4v5h7V4"></path><path d="M8 14h8v6H8z"></path></svg>
+            Saved Cases
+        </a>
+        <a class="history-btn" href="/History">
+            <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="M4 4v6h6"></path><path d="M20 20v-6h-6"></path><path d="M5.5 9a7 7 0 0 1 12-3.5L20 8"></path><path d="M18.5 15a7 7 0 0 1-12 3.5L4 16"></path></svg>
+            History
+        </a>
+    </header>
+
+    <nav class="panel-switch">
+        <button type="button" id="switchLeftBtn" aria-selected="true">
+            <svg class="icon" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M20 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10Z"></path></svg>
+            Chat &amp; Triage
+        </button>
+        <button type="button" id="switchRightBtn" aria-selected="false">
+            <svg class="icon" viewBox="0 0 24 24" style="width:14px;height:14px"><rect x="3" y="3" width="7" height="18" rx="1"></rect><rect x="14" y="3" width="7" height="9" rx="1"></rect><rect x="14" y="16" width="7" height="5" rx="1"></rect></svg>
+            Details &amp; SQL <span class="rt-dot" id="mobileFreshDot"></span>
+        </button>
+    </nav>
+
+    <main class="workspace" id="workspace" data-mobile="left">
+        <section class="panel panel-left">
+            <div class="chat-stream" id="chatStream"></div>
+            <div class="quick-command-bar" id="quickCommandBar"></div>
+            <form class="chat-input-row" id="chatInputForm">
+                <textarea id="chatInput" placeholder="พิมพ์อาการที่เจอ" autocomplete="off" rows="1"></textarea>
+                <button type="submit" id="chatSendBtn">Send</button>
+                <button type="button" id="chatStopBtn" class="chat-stop-btn" hidden title="Stop the question that is waiting for an answer">
+                    <svg viewBox="0 0 24 24" style="width:13px;height:13px" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"></rect></svg>
+                    Stop
+                </button>
+            </form>
+        </section>
+
+        <section class="panel panel-right">
+            <div class="panel-resizer" id="panelResizer" role="separator" aria-orientation="vertical" title="Drag to resize (double-click to reset)"></div>
+            <div class="right-header">
+                <div class="right-tabs" id="rightTabs"></div>
+                <button type="button" class="panel-collapse-btn" id="panelCollapseBtn" aria-label="Collapse/expand right panel" title="Collapse/expand right panel">
+                    <svg class="icon" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M9 6l6 6-6 6"></path></svg>
+                </button>
+            </div>
+            <div class="right-content" id="rightContent"></div>
+        </section>
+    </main>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<div class="case-drawer" id="caseDrawer" aria-hidden="true">
+    <div class="drawer-backdrop" id="drawerBackdrop"></div>
+    <aside class="drawer-panel" role="dialog" aria-label="เนื้อหาดิบของเคส">
+        <div class="drawer-head">
+            <div id="drawerHeadText"></div>
+            <button type="button" class="drawer-close" id="drawerCloseBtn" aria-label="Close">
+                <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+            </button>
+        </div>
+        <div class="drawer-body" id="drawerBody"></div>
+    </aside>
+</div>
+
+<dialog class="sql-editor" id="sqlEditor" aria-labelledby="sqlEditorTitle">
+    <div class="sql-editor-head">
+        <h3 id="sqlEditorTitle">Edit SQL</h3>
+        <button type="button" class="drawer-close" id="sqlEditorClose" aria-label="Close">
+            <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+        </button>
+    </div>
+    <p class="sql-editor-origin" id="sqlEditorOrigin"></p>
+    <textarea class="sql-editor-text" id="sqlEditorText" spellcheck="false" wrap="off" aria-label="SQL"></textarea>
+    <div class="sql-editor-notice" id="sqlEditorNotice" role="status"></div>
+    <div class="sql-editor-actions">
+        <button type="button" class="sql-run-btn" id="sqlEditorRun" disabled>Run live (read-only)</button>
+        <button type="button" class="sql-edit-secondary" id="sqlEditorCopy">Copy</button>
+        <button type="button" class="sql-edit-secondary" id="sqlEditorReset">Reset to original</button>
+    </div>
+    <div class="sql-editor-results" id="sqlEditorResults"></div>
+</dialog>
+
+<dialog class="sql-editor save-case-editor" id="saveCaseEditor" aria-labelledby="saveCaseEditorTitle">
+    <div class="sql-editor-head">
+        <h3 id="saveCaseEditorTitle">บันทึกเคส</h3>
+        <button type="button" class="drawer-close" id="saveCaseEditorClose" aria-label="Close">
+            <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+        </button>
+    </div>
+    <p class="sql-editor-origin">ตรวจ/แก้ไขข้อความก่อนบันทึก — สิ่งที่บันทึกคือข้อความในกล่องนี้ ณ ตอนกดบันทึก</p>
+    <textarea class="sql-editor-text save-case-editor-text" id="saveCaseEditorText" spellcheck="true" aria-label="เนื้อหาที่จะบันทึก"></textarea>
+    <div class="sql-editor-notice" id="saveCaseEditorNotice" role="status"></div>
+    <div class="sql-editor-actions">
+        <button type="button" class="btn-primary" id="saveCaseEditorSave">บันทึก</button>
+        <button type="button" class="sql-edit-secondary" id="saveCaseEditorCancel">ยกเลิก</button>
+    </div>
+</dialog>
+
+@section Scripts {
+    <script src="~/console.js" asp-append-version="true"></script>
+}

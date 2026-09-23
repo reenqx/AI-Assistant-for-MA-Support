@@ -1,0 +1,15 @@
+@AIforMAsupport.Api_HostAddress = http://localhost:5299
+
+GET {{AIforMAsupport.Api_HostAddress}}/api/history?limit=10
+Accept: application/json
+
+###
+
+POST {{AIforMAsupport.Api_HostAddress}}/api/chat/search
+Content-Type: application/json
+
+{
+  "question": "Reset Tirechecker ทำยังไง"
+}
+
+###

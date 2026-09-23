@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "Current selection",
+    "Projects": [
+      {
+        "Path": "src\\AIforMAsupport.Api\\AIforMAsupport.Api.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\AIforMAsupport.Web\\AIforMAsupport.Web.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

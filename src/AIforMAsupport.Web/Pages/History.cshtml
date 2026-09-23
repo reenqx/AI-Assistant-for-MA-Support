@@ -1,0 +1,85 @@
+@page
+@model AIforMAsupport.Web.Pages.HistoryModel
+@{
+    ViewData["Title"] = "ประวัติ";
+}
+
+<div class="history-page">
+    <header class="topbar page-topbar">
+        <a class="topbar-brand" href="/">
+            <span class="mark">
+                <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"></circle></svg>
+            </span>
+            <span class="name">AI Assistant for MA Support</span>
+        </a>
+        <span class="page-topbar-divider"></span>
+        <h1 class="page-topbar-title">ประวัติการสนทนา</h1>
+        <div class="page-topbar-actions">
+            <a class="history-btn" href="/SavedCases">
+                <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="M5 4h11l3 3v13H5V4Z"></path><path d="M8 4v5h7V4"></path><path d="M8 14h8v6H8z"></path></svg>
+                Saved Cases
+            </a>
+            <a class="history-btn" href="/">
+                <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="M19 12H5"></path><path d="M11 18l-6-6 6-6"></path></svg>
+                Back to chat
+            </a>
+        </div>
+    </header>
+
+    <div class="page-body">
+        <p class="page-body-intro">ดูคำถาม/คำตอบย้อนหลัง (โหมดดูอย่างเดียว)</p>
+
+        @if (Model.ErrorMessage is not null)
+        {
+            <div class="history-error">@Model.ErrorMessage</div>
+        }
+
+        <div class="history-body">
+            <aside class="history-list">
+                @if (Model.Conversations.Count == 0 && Model.ErrorMessage is null)
+                {
+                    <div class="history-empty">ยังไม่มีประวัติการสนทนา</div>
+                }
+                @foreach (var c in Model.Conversations)
+                {
+                    <a class="history-item @(Model.SelectedConversationId == c.ConversationId ? "active" : "")"
+                       href="/History?id=@c.ConversationId">
+                        <div class="history-item-question">@c.FirstQuestion</div>
+                        <div class="history-item-meta">@c.LastActivityUtc.ToLocalTime().ToString("d MMM HH:mm") &middot; @c.TurnCount เทิร์น</div>
+                    </a>
+                }
+            </aside>
+
+            <main class="history-detail">
+                @if (Model.SelectedConversationId is null)
+                {
+                    <div class="history-empty">เลือกบทสนทนาทางซ้ายเพื่อดูรายละเอียด</div>
+                }
+                else if (Model.SelectedTurns is null || Model.SelectedTurns.Count == 0)
+                {
+                    <div class="history-empty">ไม่พบบทสนทนานี้</div>
+                }
+                else
+                {
+                    @foreach (var turn in Model.SelectedTurns)
+                    {
+                        <div class="history-turn">
+                            <div class="history-turn-question">@turn.Question</div>
+                            <div class="history-turn-answer message-text">@Html.Raw(AIforMAsupport.Web.Pages.HistoryModel.RenderAnswer(turn.Answer))</div>
+                            @if (turn.ReferencedCaseIds.Count > 0)
+                            {
+                                <div class="case-tags">
+                                    @foreach (var id in turn.ReferencedCaseIds)
+                                    {
+                                        <span class="case-tag-static">#@id</span>
+                                    }
+                                </div>
+                            }
+                            <div class="history-turn-time">@turn.CreatedAtUtc.ToLocalTime().ToString("d MMM yyyy HH:mm")</div>
+                        </div>
+                    }
+                }
+            </main>
+        </div>
+    </div>
+</div>

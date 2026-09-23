@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AIforMAsupport.Api/AIforMAsupport.Api.csproj" />
+    <Project Path="src/AIforMAsupport.Web/AIforMAsupport.Web.csproj" />
+  </Folder>
+</Solution>
