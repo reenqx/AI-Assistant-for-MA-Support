@@ -24,7 +24,9 @@ builder.Services.AddSwaggerGen();
 // direct Anthropic API key later (see Services/Ai) - everything else in the app talks to the
 // interface only, never to ClaudeCodeHeadlessAiClient directly.
 builder.Services.Configure<ClaudeCliOptions>(builder.Configuration.GetSection(ClaudeCliOptions.SectionName));
-builder.Services.AddSingleton<IAiClient, ClaudeCodeHeadlessAiClient>();
+//builder.Services.AddSingleton<IAiClient, ClaudeCodeHeadlessAiClient>();
+
+builder.Services.AddHttpClient<IAiClient, GeminiAiClient>();
 
 // HistoryOptions is configured once, up here, because it's now shared by three stores
 // (ConversationHistory, SavedCases, and KbAdditions below) that all live in the same SQLite file.
