@@ -481,14 +481,12 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 
-# Local SQLite data (conversation audit log)
+# Local SQLite data (conversation audit log). The main history DB is tracked on purpose
+# (user decision); only the transient WAL/shared-memory sidecar files stay ignored.
 *.db
+!src/AIforMAsupport.Api/conversation_history.db
 *.db-shm
 *.db-wal
 
 # Visual Studio multi-project startup (user override; the shared .slnLaunch is checked in)
 *.slnLaunch.user
-
-# Contains the real MoCS_dev connection string (with password) in plain text - never commit this
-# file. Copy it from a teammate or from `dotnet user-secrets` on a machine that already has it.
-src/AIforMAsupport.Api/appsettings.Development.json

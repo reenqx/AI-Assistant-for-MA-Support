@@ -79,6 +79,8 @@ Path ของทั้ง 4 ไฟล์ใน `data/` ตั้งค่าไ
 
 **ทำความสะอาดแล้ว**: ลบ `bin/`/`obj/`/`.vs/` ที่ค้างอยู่ที่ root (debris จากตอนที่ folder ยังชื่อ `MACaseCopilot` ก่อนเปลี่ยนชื่อ ไม่มีไฟล์โปรเจกต์ที่ root คอยสร้างมันขึ้นมาจริง ๆ — เป็นแค่ของค้าง ลบได้ปลอดภัย regenerate เองถ้าจำเป็น)
 
+**อัปเดตล่าสุด (2026-09-25): user สั่งให้ `appsettings.Development.json` (Api) และไฟล์ `conversation_history.db` ถูก commit ขึ้น git ได้** — เอาบรรทัด ignore ของ `appsettings.Development.json` ออกจาก `.gitignore` และเพิ่ม `!src/AIforMAsupport.Api/conversation_history.db` ยกเว้น `*.db` (ไฟล์ `*.db-shm`/`*.db-wal` ยัง ignore) — ไฟล์นี้มีรหัสผ่าน DB dev จริงเป็น plain text และไฟล์ .db มีประวัติคำถาม/เคสที่บันทึก จึงต้องให้ repo บน GitHub เป็น private เสมอ; ย่อหน้าถัดไปที่บอกว่าไฟล์นี้ถูก ignore เป็นประวัติการตัดสินใจเดิม ไม่ใช่สถานะปัจจุบันแล้ว
+
 **`ConnectionStrings:MoCS` (รหัสผ่าน DB dev) — ตัดสินใจกลับไปกลับมารอบหนึ่ง, สรุปสุดท้าย: อยู่ใน `appsettings.Development.json` จริง ๆ ตามที่ user ยืนยัน** ทดลองย้ายไปไว้ใน `dotnet user-secrets` ก่อน (เพราะ `appsettings.Development.json` ปกติจะถูก commit เข้า git) แต่ user ขอย้ายกลับมาไว้ใน appsettings ตามเดิม — เพื่อไม่ให้รหัสผ่านหลุดเข้า git history จริง จึงเพิ่ม `src/AIforMAsupport.Api/appsettings.Development.json` เข้า `.gitignore` แบบเจาะจงไฟล์นี้ไฟล์เดียว (ไม่ใช้ pattern กว้าง เพื่อไม่ให้ไฟล์เดียวกันของ Web ที่ไม่มีความลับอะไรถูก ignore ไปด้วยโดยไม่จำเป็น) — ผลคือค่าทั้งไฟล์นี้ (รวม `SqlRun:Enabled`/`AllowWrites` ที่ไม่ใช่ความลับ) จะไม่ถูก track ใน git อีกต่อไป ถ้าเครื่องอื่นต้องตั้งค่าใหม่ ต้องสร้างไฟล์นี้เองจากตัวอย่างในเอกสารนี้ ไม่มีให้ pull จาก git — ลบ secret ที่เคยตั้งไว้ใน `dotnet user-secrets` ออกแล้วเพื่อไม่ให้มีสองที่เก็บค่าเดียวกัน
 
 ## สถาปัตยกรรมที่ตกลงแล้ว
