@@ -237,7 +237,7 @@ public sealed class ChatController : ControllerBase
         return command.Kind switch
         {
             ChatCommandKind.Question => ResolveQuestion(conversationId, question, cancellationToken),
-            ChatCommandKind.DuplicateCheck => Task.FromResult(ResolveSearchFollowUp(conversationId, command, topN: 20)),
+            ChatCommandKind.DuplicateCheck => ResolveSearchFollowUp(conversationId, command, 20, cancellationToken),
             ChatCommandKind.DraftCustomerReply or ChatCommandKind.SaveCaseNote =>
                 ResolveAnswerReuse(conversationId, command, cancellationToken),
             _ => throw new InvalidOperationException($"Unhandled command kind: {command.Kind}"),
@@ -336,9 +336,38 @@ public sealed class ChatController : ControllerBase
 
     // Only เคสซ้ำ uses this now (see ChatCommandParser) - never wants AI-authored SQL, just a wide
     // fresh search to count how often a symptom recurs.
-    private ResolvedTurn ResolveSearchFollowUp(Guid conversationId, ParsedCommand command, int topN)
+    // เปลี่ยน Signature และเนื้อหาด้านในเป็น:
+    private async Task<ResolvedTurn> ResolveSearchFollowUp(Guid conversationId, ParsedCommand command, int topN, CancellationToken cancellationToken)
     {
-        var effectiveQuestion = command.RemainderText ?? _conversationStore.GetLastTurn(conversationId)?.Question;
+        var effectiveQuestion = command.RemainderText;
+
+        // ดึงอาการตั้งต้น หรือ Summary จากประวัติแชทหากไม่ได้พิมพ์ข้อความต่อท้ายคำสั่ง
+        if (string.IsNullOrWhiteSpace(effectiveQuestion))
+        {
+            var history = await _historyStore.GetConversationAsync(conversationId, cancellationToken);
+
+            // 1. ลองหาคำถามปกติที่ไม่ใช่คำสั่งลัดหรือการเปิดเลขเคส
+            effectiveQuestion = history
+                .Select(h => h.Question)
+                .FirstOrDefault(q => !q.StartsWith('#') &&
+                                     !q.StartsWith("ร่าง") &&
+                                     !q.StartsWith("บันทึก") &&
+                                     !q.StartsWith("เคสซ้ำ"));
+
+            // 2. ถ้าเจอแต่การค้นหาเลขเคส ให้ดึงหัวข้อ (Summary) ของเคสนั้นมาใช้
+            if (string.IsNullOrWhiteSpace(effectiveQuestion))
+            {
+                var lastTurn = _conversationStore.GetLastTurn(conversationId);
+                if (lastTurn?.Question.StartsWith('#') == true)
+                {
+                    effectiveQuestion = lastTurn.Context.FirstOrDefault()?.Summary;
+                }
+            }
+
+            // 3. Fallback กลับไปใช้ข้อความล่าสุดถ้าหาไม่ได้จริงๆ
+            effectiveQuestion ??= _conversationStore.GetLastTurn(conversationId)?.Question;
+        }
+
         if (effectiveQuestion is null)
         {
             return new ResolvedTurn(
@@ -354,7 +383,6 @@ public sealed class ChatController : ControllerBase
         var scripts = FindRelevantScripts(context, effectiveQuestion);
         return new ResolvedTurn(false, null, PromptBuilder.Build(effectiveQuestion, context, command.CommandLabel, scripts), context, effectiveQuestion, scripts);
     }
-
     private async Task<ResolvedTurn> ResolveAnswerReuse(Guid conversationId, ParsedCommand command, CancellationToken cancellationToken)
     {
         var lastTurn = _conversationStore.GetLastTurn(conversationId);

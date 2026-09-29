@@ -25,27 +25,49 @@ public class GeminiAiClient : IAiClient
             throw new InvalidOperationException("Gemini API key is not configured.");
         }
 
+        // 1. ตั้งค่า Path ให้ตรงกับที่ Claude เคยใช้ (ถอยหลัง 2 โฟลเดอร์)
+        string systemInstructionText = "คุณคือ AI Assistant สำหรับงาน MA Support";
+        string instructionPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "data", "Project_Instruction_MA_Bridgestone_v2.md");
+
+        if (File.Exists(instructionPath))
+        {
+            systemInstructionText = await File.ReadAllTextAsync(instructionPath, cancellationToken);
+        }
+
         var endpoint = $"https://generativelanguage.googleapis.com/v1/models/{_model}:generateContent?key={_apiKey}";
 
+        // 2. จัดรูปแบบ Request พร้อมเพิ่ม Generation Config ควบคุมความแม่นยำ
         var requestBody = new
         {
+            systemInstruction = new
+            {
+                parts = new[] { new { text = systemInstructionText } }
+            },
             contents = new[]
             {
-                new
-                {
-                    parts = new[]
-                    {
-                        new { text = prompt }
-                    }
-                }
+            new
+            {
+                parts = new[] { new { text = prompt } }
+            }
+        },
+            // ปรับแต่งให้ Gemini ตอบแบบอิงข้อมูลจริง ไม่แต่งเรื่อง (เทียบเท่า Restricted Mode)
+            generationConfig = new
+            {
+                temperature = 0.1, // ค่าต่ำ = ลดความสร้างสรรค์ เน้นความถูกต้องเป๊ะๆ
+                topP = 0.8,
+                topK = 40
             }
         };
 
         var json = JsonSerializer.Serialize(requestBody);
         using var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var response = await _httpClient.PostAsync(endpoint, content, cancellationToken);
-        var responseString = await response.Content.ReadAsStringAsync(cancellationToken);
+        // 3. จำลองการจำกัดเวลา 150 วินาทีแบบที่ Claude ตั้งไว้
+        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(150));
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
+
+        var response = await _httpClient.PostAsync(endpoint, content, linkedCts.Token);
+        var responseString = await response.Content.ReadAsStringAsync(linkedCts.Token);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -67,7 +89,7 @@ public class GeminiAiClient : IAiClient
 
         return string.Empty;
     }
-    // เปลี่ยนจาก Task เป็น Task<string>
+
     public async Task<string> AskStreamAsync(string prompt, Func<string, Task> onTokenReceived, CancellationToken cancellationToken = default)
     {
         // 1. ดึงคำตอบทั้งหมดมาก่อนผ่าน AskAsync ปกติ
