@@ -1,7 +1,3 @@
-# MA project
-
-https://claude.ai/artifact/AufqRnbmVpDQ3Nioe5RABr
-
 # AI Assistant for MA Support
 
 เปลี่ยนเคส MANTIS ที่ปิดแล้ว ให้เป็นผู้ช่วยวิเคราะห์ปัญหาของทีม MA อัตโนมัติ
